@@ -450,7 +450,8 @@ export const coordinateServicesToolDef = new Tool({
             medications: input.medications,
             delivery_date: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0],
             special_instructions:
-  'Please deliver the medications safely to the patient’s home and obtain a signature upon delivery to ensure everything reaches them securely.',
+  "Please deliver the medications safely to the patient’s home and obtain a signature upon delivery to ensure everything reaches them securely.",
+          },
           timestamp: new Date().toISOString(),
         });
       }
