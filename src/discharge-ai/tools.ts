@@ -19,6 +19,7 @@ import {
   evaluateSymptoms,
 } from './safety.js';
 import { SAMPLE_GROCERY_ITEMS } from './fixtures.js';
+import { resourceCache, CACHE_KEYS } from './resource-cache.js';
 
 /**
  * Tool 1: Analyze Discharge Summary
@@ -159,6 +160,9 @@ export const analyzeDischargeToolDef = new Tool({
       raw_summary: input.discharge_text,
     };
 
+    // Update resource cache
+    resourceCache.set(CACHE_KEYS.DISCHARGE_SUMMARY, summary);
+
     return summary;
   },
 });
@@ -193,7 +197,6 @@ export const generateTimelineToolDef = new Tool({
   handler: async (
     input: {
       discharge_summary: {
-        patient_name?: string;
         diagnoses: string[];
         medications: Array<{ name: string; dosage: string; frequency: string; instructions?: string }>;
         dietary_restrictions: Array<{ type: string }>;
@@ -294,7 +297,6 @@ export const generateTimelineToolDef = new Tool({
     }
 
     const timeline: RecoveryTimeline = {
-      patient_name: input.discharge_summary.patient_name,
       start_date: startDate.toISOString().split('T')[0],
       total_days: input.total_days,
       condition: translateMedicalJargon(input.discharge_summary.diagnoses[0] || 'recovery'),
@@ -312,6 +314,9 @@ export const generateTimelineToolDef = new Tool({
       },
     };
 
+    // Update resource cache
+    resourceCache.set(CACHE_KEYS.RECOVERY_TIMELINE, timeline);
+
     return timeline;
   },
 });
@@ -326,15 +331,37 @@ export const buildGroceryToolDef = new Tool({
     'Creates a doctor-recommended grocery shopping list, filtering out foods that violate dietary restrictions or interact with medications.',
   inputSchema: z.object({
     dietary_restrictions: z
-      .array(z.string())
+      .union([
+        z.array(z.string()),
+        z.string(),
+      ])
+      .transform((val) => {
+        if (Array.isArray(val)) return val;
+        try {
+          return JSON.parse(val);
+        } catch {
+          return [val];
+        }
+      })
       .describe('List of dietary restrictions (e.g., "low-sodium", "diabetic")'),
     medications: z
-      .array(
-        z.object({
-          name: z.string(),
-          dosage: z.string().optional(),
-        })
-      )
+      .union([
+        z.array(
+          z.object({
+            name: z.string(),
+            dosage: z.string().optional(),
+          })
+        ),
+        z.string(),
+      ])
+      .transform((val) => {
+        if (Array.isArray(val)) return val;
+        try {
+          return JSON.parse(val);
+        } catch {
+          return [];
+        }
+      })
       .describe('List of prescribed medications'),
     patient_name: z.string().optional().describe('Patient name'),
   }),
@@ -349,8 +376,8 @@ export const buildGroceryToolDef = new Tool({
     context.logger.info('Building grocery cart with safety filters');
 
     // Convert input to schema format
-    const restrictions = input.dietary_restrictions.map((type) => ({ type }));
-    const meds = input.medications.map((m) => ({
+    const restrictionObjects = input.dietary_restrictions.map((type) => ({ type }));
+    const medObjects = input.medications.map((m) => ({
       name: m.name,
       dosage: m.dosage || 'unknown',
       frequency: 'as prescribed',
@@ -358,7 +385,7 @@ export const buildGroceryToolDef = new Tool({
     }));
 
     // Filter grocery items
-    const safeItems = filterGroceryItemsByRestrictions(SAMPLE_GROCERY_ITEMS, restrictions, meds);
+    const safeItems = filterGroceryItemsByRestrictions(SAMPLE_GROCERY_ITEMS, restrictionObjects, medObjects);
 
     // Calculate estimated total
     const estimatedTotal = safeItems.reduce((sum, item) => {
@@ -383,6 +410,9 @@ export const buildGroceryToolDef = new Tool({
           ? ['No dietary restrictions were available. Please confirm them with your healthcare provider so we can recommend the safest foods for your recovery.']
           : undefined,
     };
+
+    // Update resource cache
+    resourceCache.set(CACHE_KEYS.GROCERY_CART, cart);
 
     return cart;
   },
@@ -492,6 +522,9 @@ export const coordinateServicesToolDef = new Tool({
       }
     }
 
+    // Update resource cache
+    resourceCache.set(CACHE_KEYS.CARE_SERVICE_PAYLOADS, payloads);
+
     return payloads;
   },
 });
@@ -560,6 +593,9 @@ export const evaluateSymptomToolDef = new Tool({
         ? ['Baseline vital signs were not available, so this assessment is based only on your reported symptoms. If you have any concerns or notice changes in your condition, please consult your healthcare provider.']
         : undefined,
     };
+
+    // Update resource cache
+    resourceCache.set(CACHE_KEYS.SYMPTOM_EVALUATION, result);
 
     return result;
   },
