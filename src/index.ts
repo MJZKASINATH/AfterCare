@@ -17,7 +17,6 @@ import {
 } from './discharge-ai/resources.js';
 
 import process from 'process';
-
 const server = createServer({
   name: 'AfterCare',
   version: '1.0.0',

@@ -30,9 +30,7 @@ AfterCare/
 │   │   ├── safety.ts              # Guardrails & validators (16 KB)
 │   │   ├── tools.ts               # Five MCP tools (20 KB)
 │   │   ├── fixtures.ts            # Mock data (11.7 KB)
-│   │   └── README.md              # Module documentation
-│   ├── modules/
-│   │   └── billing/               # Pre-existing module (not used)
+│   │   └── README.md              # Module documentation  
 │   └── index.ts                   # Server entry point
 ├── package.json                   # Dependencies
 ├── tsconfig.json                  # TypeScript config
