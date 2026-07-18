@@ -148,7 +148,8 @@ export const analyzeDischargeToolDef = new Tool({
     const summary: DischargeSummary = {
       patient_name: input.patient_name,
       discharge_date: input.discharge_date || new Date().toISOString().split('T')[0],
-      admission_reason: translateMedicalJargon(diagnoses[0] || 'Hospital admission'),
+     admission_reason:
+  `${translateMedicalJargon(diagnoses[0] || 'Hospital admission')}. We've carefully reviewed your discharge information and organized everything into a simple recovery plan to help you feel more confident and supported during your recovery journey.`,
       diagnoses: diagnoses.map((d) => translateMedicalJargon(d)),
       medications,
       dietary_restrictions,
@@ -283,10 +284,10 @@ export const generateTimelineToolDef = new Tool({
         warning_signs: warningSignsBase,
         notes:
           dayNum === 1
-            ? 'Focus on rest and hydration. Pain is normal; use medication as prescribed.'
-            : dayNum === 7
-              ? 'You should be feeling significantly better. Continue following restrictions.'
-              : undefined,
+    ? 'Welcome home. Today is all about giving your body the rest it deserves. Stay hydrated, take your medications on time, and remember that healing takes time. Every small step you take today is part of your recovery.'
+    : dayNum === 7
+      ? "You're making encouraging progress. Continue following your recovery plan, stay patient with yourself, and keep up these healthy habits. Consistency is one of the most important parts of healing."
+      : undefined,
       };
 
       days.push(day);
@@ -298,14 +299,14 @@ export const generateTimelineToolDef = new Tool({
       total_days: input.total_days,
       condition: translateMedicalJargon(input.discharge_summary.diagnoses[0] || 'recovery'),
       days,
-      general_guidelines: [
-        'Take all medications exactly as prescribed',
-        'Follow dietary restrictions strictly',
-        'Stay hydrated throughout the day',
-        'Gradually increase activity as tolerated',
-        'Keep all follow-up appointments',
-        'Call your doctor if you have concerns',
-      ],
+     general_guidelines: [
+  'Take your medications exactly as prescribed to support a safe and steady recovery.',
+  'Follow your recommended diet to help your body heal more effectively.',
+  'Drink enough water throughout the day unless your healthcare provider has advised otherwise.',
+  'Increase your daily activities gradually and listen to your body whenever it needs rest.',
+  'Attend all follow-up appointments so your healthcare team can monitor your progress.',
+  "If something worries you or feels unusual, don't hesitate to contact your healthcare provider. Your wellbeing always comes first.",
+],
       emergency_contacts: {
         after_hours_line: '(555) 999-0000',
       },
@@ -371,15 +372,15 @@ export const buildGroceryToolDef = new Tool({
       items: safeItems,
       estimated_total: Math.round(estimatedTotal * 100) / 100,
       shopping_tips: [
-        'Buy fresh produce; frozen is acceptable if fresh is unavailable',
-        'Check expiration dates on all items',
-        'Choose low-sodium versions of canned goods',
-        'Ask pharmacist about any food-medication interactions',
-        'Consider meal prep to save time during recovery',
-      ],
+  'These groceries have been selected to help support your recovery and overall wellbeing.',
+  'Fresh ingredients are ideal, but frozen alternatives are perfectly fine when needed.',
+  'Check expiry dates to ensure your meals remain fresh and safe.',
+  "If you're unsure whether any food interacts with your medication, don't hesitate to ask your pharmacist.",
+  'Preparing meals in advance can make your recovery easier and allow you to focus more on resting and healing.',
+],
       missing_data_warnings:
         input.dietary_restrictions.length === 0
-          ? ['No dietary restrictions provided; confirm with patient']
+          ? ['No dietary restrictions were available. Please confirm them with your healthcare provider so we can recommend the safest foods for your recovery.']
           : undefined,
     };
 
@@ -448,8 +449,8 @@ export const coordinateServicesToolDef = new Tool({
             patient_name: input.patient_name,
             medications: input.medications,
             delivery_date: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-            special_instructions: 'Deliver to patient home; signature required',
-          },
+            special_instructions:
+  'Please deliver the medications safely to the patient’s home and obtain a signature upon delivery to ensure everything reaches them securely.',
           timestamp: new Date().toISOString(),
         });
       }
@@ -474,7 +475,9 @@ export const coordinateServicesToolDef = new Tool({
             calendar_invite: {
               event_id: `EVT-${Date.now()}-${Math.random()}`,
               title: `Follow-up: ${followUp.provider_type}`,
-              description: followUp.reason || 'Post-discharge follow-up appointment',
+              description:
+  followUp.reason ||
+  'This follow-up appointment is an important part of your recovery journey, helping your healthcare provider monitor your progress and support your continued healing.',
               start_datetime: startTime.toISOString(),
               end_datetime: endTime.toISOString(),
               provider_name: followUp.provider_name,
@@ -528,31 +531,32 @@ export const evaluateSymptomToolDef = new Tool({
       reported_symptoms: input.symptoms,
       evaluation_timestamp: new Date().toISOString(),
       recommendation: evaluation.recommendation,
-      reasoning: evaluation.reasoning,
+     reasoning:
+  `${evaluation.reasoning} This guidance is intended to help you make informed decisions about your recovery, but if you're ever unsure or feel your condition is worsening, please contact your healthcare provider immediately.`,
       red_flags_detected: evaluation.red_flags_detected,
       suggested_actions:
         evaluation.recommendation === 'go_to_er'
           ? [
-              'Call 911 or go to the nearest emergency room immediately',
-              'Bring discharge papers and medication list',
-              'Inform ER staff of recent hospitalization',
+              'Your symptoms may require urgent medical attention. Please go to the nearest emergency department or call emergency services immediately.',
+'If possible, ask a trusted family member or caregiver to accompany you.',
+'Bring your discharge papers and medication list to help the medical team understand your recent treatment.',
             ]
           : evaluation.recommendation === 'call_doctor'
             ? [
-                'Call your doctor or nurse hotline',
-                'Have your discharge papers and medication list ready',
-                'Describe all symptoms and when they started',
-                'Follow any instructions given by your healthcare provider',
+               'Your symptoms should be discussed with your healthcare provider as soon as possible.',
+'Keep your discharge summary and medication list nearby when you call.',
+'Describe your symptoms clearly, including when they started and whether they have changed.',
+'Carefully follow the advice provided by your healthcare team, and seek immediate care if your symptoms suddenly become worse.',
               ]
             : [
-                'Rest and stay hydrated',
-                'Take prescribed medications as directed',
-                'Monitor your symptoms',
-                'Call your doctor if symptoms worsen or new symptoms develop',
+                'Continue getting plenty of rest and stay well hydrated to support your recovery.',
+'Take all prescribed medications exactly as directed by your healthcare provider.',
+'Keep monitoring your symptoms and pay attention to any noticeable changes.',
+'If your symptoms worsen, new symptoms develop, or you feel concerned at any point, please contact your healthcare provider promptly.',
               ],
       emergency_contact: '911',
       missing_data_warnings: !input.baseline_vitals
-        ? ['Baseline vital signs not provided; symptom evaluation is general guidance only']
+        ? ['Baseline vital signs were not available, so this assessment is based only on your reported symptoms. If you have any concerns or notice changes in your condition, please consult your healthcare provider.']
         : undefined,
     };
 
